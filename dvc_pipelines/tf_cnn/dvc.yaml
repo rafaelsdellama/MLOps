@@ -1,0 +1,19 @@
+stages:
+  all_pipeline:
+    cmd: python3 src/all_pipeline.py
+    deps:
+    - src/all_pipeline.py
+    params:
+    - evaluate.plots_file
+    - evaluate.scores_file
+    - prepare.random_state
+    - prepare.test_size
+    - train.model_filename
+    - train.params.batch_size
+    - train.params.epochs
+    - train.params.random_state
+    outs:
+    - models/model.pkl
+    metrics:
+    - metrics/scores.json:
+        cache: false

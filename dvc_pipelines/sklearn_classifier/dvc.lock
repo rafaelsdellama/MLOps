@@ -1,0 +1,77 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python3 src/prepare.py
+    deps:
+    - path: src/prepare.py
+      md5: 87a33a961ca9739d18a6a8e587d1d0ec
+      size: 1202
+    params:
+      params.yaml:
+        prepare.random_state: 42
+        prepare.test_size: 0.33
+    outs:
+    - path: data/prepared
+      md5: 16ca6e35f66518ac034d8fbac55f31bd.dir
+      size: 4386
+      nfiles: 2
+  featurize:
+    cmd: python3 src/featurize.py data/prepared data/features
+    deps:
+    - path: data/prepared
+      md5: 16ca6e35f66518ac034d8fbac55f31bd.dir
+      size: 4386
+      nfiles: 2
+    - path: src/featurize.py
+      md5: c294d57168678f6418fe8c8a28eb03be
+      size: 1422
+    outs:
+    - path: data/features
+      md5: ec6e8711e24ae6ca0339aafd572726ca.dir
+      size: 7504
+      nfiles: 2
+  train:
+    cmd: python3 src/train.py data/features models/model.pkl
+    deps:
+    - path: data/features
+      md5: ec6e8711e24ae6ca0339aafd572726ca.dir
+      size: 7504
+      nfiles: 2
+    - path: src/train.py
+      md5: f6aefc9d5d77cf6a2308fdeb2507652c
+      size: 1349
+    params:
+      params.yaml:
+        train:
+          import_module: sklearn.tree
+          name: DecisionTreeClassifier
+          params:
+            random_state: 42
+    outs:
+    - path: models/model.pkl
+      md5: 4fad6838b8166aef58b4b325e377cc32
+      size: 2625
+  evaluate:
+    cmd: python3 src/evaluate.py models/model.pkl data/features metrics/scores.json
+      metrics/cm_classes.csv
+    deps:
+    - path: data/features
+      md5: ec6e8711e24ae6ca0339aafd572726ca.dir
+      size: 7504
+      nfiles: 2
+    - path: models/model.pkl
+      md5: 4fad6838b8166aef58b4b325e377cc32
+      size: 2625
+    - path: src/evaluate.py
+      md5: 137af99858bccb9729c1d09b61687dbb
+      size: 1961
+    params:
+      params.yaml:
+        evaluate.metrics:
+        - accuracy
+        - balanced_accuracy
+        - adjusted_rand_score
+    outs:
+    - path: metrics/scores.json
+      md5: 50843813e3f05cd780ad0370f0f484ca
+      size: 127

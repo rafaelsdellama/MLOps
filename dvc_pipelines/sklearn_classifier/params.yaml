@@ -1,0 +1,13 @@
+prepare:
+    test_size: 0.33
+    random_state: 42
+train:
+  import_module: sklearn.tree
+  name: DecisionTreeClassifier
+  params:
+    random_state: 42
+evaluate:
+  metrics:
+    - accuracy
+    - balanced_accuracy
+    - adjusted_rand_score

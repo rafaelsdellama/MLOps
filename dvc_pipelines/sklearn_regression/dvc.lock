@@ -1,0 +1,74 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python3 src/prepare.py
+    deps:
+    - path: src/prepare.py
+      md5: ee8658338f98c6813beaed4e219e787e
+      size: 1179
+    params:
+      params.yaml:
+        prepare.random_state: 42
+        prepare.test_size: 0.33
+    outs:
+    - path: data/prepared
+      md5: e07b4b7060a9259ea6277084b9272c92.dir
+      size: 90386
+      nfiles: 2
+  featurize:
+    cmd: python3 src/featurize.py data/prepared data/features
+    deps:
+    - path: data/prepared
+      md5: e07b4b7060a9259ea6277084b9272c92.dir
+      size: 90386
+      nfiles: 2
+    - path: src/featurize.py
+      md5: 8e6cc8f4f230e99c8875ec7097cd4842
+      size: 935
+    outs:
+    - path: data/features
+      md5: 0a7e03f562ca790df5f6e2824e03bdf7.dir
+      size: 42737
+      nfiles: 2
+  train:
+    cmd: python3 src/train.py data/features models/model.pkl
+    deps:
+    - path: data/features
+      md5: 0a7e03f562ca790df5f6e2824e03bdf7.dir
+      size: 42737
+      nfiles: 2
+    - path: src/train.py
+      md5: 9bd58e192b6bdf0c6bdb63cb7544a552
+      size: 1157
+    params:
+      params.yaml:
+        train.import_module: sklearn.linear_model
+        train.name: LinearRegression
+        train.params.n_jobs: -1
+    outs:
+    - path: models/model.pkl
+      md5: 9a81192bb1bfbc49c8f80697ce291e50
+      size: 639
+  evaluate:
+    cmd: python3 src/evaluate.py models/model.pkl data/features metrics/scores.json
+      metrics/predicted.csv
+    deps:
+    - path: data/features
+      md5: 0a7e03f562ca790df5f6e2824e03bdf7.dir
+      size: 42737
+      nfiles: 2
+    - path: models/model.pkl
+      md5: 9a81192bb1bfbc49c8f80697ce291e50
+      size: 639
+    - path: src/evaluate.py
+      md5: fd0c83b7f8a6d2ae3d4bbcd73ada2e59
+      size: 1868
+    params:
+      params.yaml:
+        evaluate.metrics:
+        - neg_mean_squared_error
+        - r2
+    outs:
+    - path: metrics/scores.json
+      md5: f43e11c2a9e5ba5f4d6149db50b43d2c
+      size: 73

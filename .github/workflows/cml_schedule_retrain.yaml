@@ -1,0 +1,59 @@
+name: model-training
+
+on:
+  # Allows you to run this workflow manually from the Actions tab or through HTTP API
+  workflow_dispatch:
+  schedule:
+    # (UTC TIME)
+    - cron: '*/30 * * * *'
+#on: [push]
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    container: docker://dvcorg/cml-py3:latest
+
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+
+      - uses: actions/checkout@v2
+      - name: Train model
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Install requirements
+          pip install -r pipelines/sklearn_classifier/requirements.txt
+
+          # Pull data & run-cache from S3 and reproduce pipeline
+          dvc repro pipelines/sklearn_classifier/dvc.yaml -f
+          # dvc push
+
+          # Report metrics
+          echo "## Métricas" >> report.md 
+          cat pipelines/sklearn_classifier/metrics/scores.json >> report.md
+          
+          # Publish confusion matrix diff
+          echo "## Plots" >> report.md
+          echo "### Class confusions" >> report.md
+          dvc plots show pipelines/sklearn_classifier/metrics/cm_classes.csv --template confusion -x real -y predicted --show-vega > vega.json
+          vl2png vega.json -s 1.5 > plot.png
+          cml publish --md plot.png >> report.md
+
+          cml-send-github-check report.md
+          cml-pr new_models
+          
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "automatic retrain at ${{ steps.date.outputs.date }}"
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: dvc_repro
+          delete-branch: true
+          title: 'Retrain'
+          body: |
+            Retrain model
+          draft: false

@@ -1,0 +1,40 @@
+stages:
+  prepare:
+    cmd: python3 src/prepare.py
+    deps:
+    - src/prepare.py
+    params:
+    - prepare.random_state
+    - prepare.test_size
+    outs:
+    - data/prepared
+  featurize:
+    cmd: python3 src/featurize.py data/prepared data/features
+    deps:
+    - data/prepared
+    - src/featurize.py
+    outs:
+    - data/features
+  train:
+    cmd: python3 src/train.py data/features models/model.pkl
+    deps:
+    - data/features
+    - src/train.py
+    params:
+    - train.import_module
+    - train.name
+    - train.params.n_jobs
+    outs:
+    - models/model.pkl
+  evaluate:
+    cmd: python3 src/evaluate.py models/model.pkl data/features metrics/scores.json
+      metrics/predicted.csv
+    deps:
+    - data/features
+    - models/model.pkl
+    - src/evaluate.py
+    params:
+    - evaluate.metrics
+    metrics:
+    - metrics/scores.json:
+        cache: false

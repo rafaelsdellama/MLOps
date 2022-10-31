@@ -1,0 +1,12 @@
+prepare:
+      test_size: 0.33
+      random_state: 42
+train:
+  import_module: sklearn.linear_model
+  name: LinearRegression
+  params:
+    n_jobs: -1
+evaluate:
+  metrics:
+    - neg_mean_squared_error
+    - r2
